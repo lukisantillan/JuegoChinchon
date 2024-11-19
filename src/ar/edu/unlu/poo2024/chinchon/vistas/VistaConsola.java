@@ -144,13 +144,13 @@ public class VistaConsola extends JFrame implements IVista {
     }
 
     private void procesarJugada(String textoEntrada) throws Exception {
-        this.imprimirCartel("ENTRADA " +
-                "=" + textoEntrada);
         int IDjugador = this.controlador.jugadorTurnoActual().getId();
+        int numero;
+        String mano;
         if (IDjugador == this.clienteID) {
             switch (estado){
                 case ESPERANDO_JUGADA:
-                    this.imprimirCartel("ENTRADA " +
+                    this.imprimirCartel("ENTRADA *ESPERANDO JUGADA*" +
                             "=" + textoEntrada);
                     if (textoEntrada.equals("1") && this.controlador.puedeRobar()){
                         this.imprimirCartel("-> SE ESTA TOMANDO UNA CARTA DEL MAZO...");
@@ -163,26 +163,30 @@ public class VistaConsola extends JFrame implements IVista {
                         break;
                     }
                     this.estado = Estados.ROBAR_CARTA;
-                    this.mostrarManoJugador();
+                    textArea.setText(this.mostrarManoJugador());
                     this.imprimirCartel("DESEA FORMAR GRUPOS PARA CERRAR LA MANO(recuerde que debe tener al menos 2 grupos de 3 cartas): ");
                     this.imprimirCartel("[1] - SI");
                     this.imprimirCartel("[2] - NO");
                     break;
                 case ROBAR_CARTA:
-                    int numero = Integer.parseInt(textoEntrada);
+                    this.imprimirCartel("ENTRADA *ROBAR CARTA*" +
+                            "=" + textoEntrada);
+                    numero = Integer.parseInt(textoEntrada);
                     if (numero == 2){
                         this.imprimirCartel("INGRESE EL INDICE DE LA CARTA QUE QUIERE DESCARTAR: ");
                         this.estado = Estados.TIRAR_CARTA;
                         break;
                     } else if (numero == 1){
                         this.estado = Estados.CORTAR;
-                        this.imprimirCartel("Selecciona las cartas para formar un grupo (ingresa los números separados por comas):");
+                        this.imprimirCartel("ENVIE CUALQUIER CARACTER PARA CONTINUAR..");
                         break;
                     } else {
                         this.imprimirCartel("INGRESE UN VALOR VALIDO");
                         break;
                     }
                 case TIRAR_CARTA:
+                    this.imprimirCartel("ENTRADA *TIRAR CARTA*" +
+                            "=" + textoEntrada);
                     numero = Integer.parseInt(textoEntrada);;
                     this.controlador.descartarCarta(IDjugador,numero - 1);
                     this.imprimirCartel("PASANDO RONDA.. ");
@@ -191,30 +195,13 @@ public class VistaConsola extends JFrame implements IVista {
                     this.procesarEntrada(textoEntrada);
                     break;
                 case CORTAR:
-                    this.mostrarManoJugador();
-                    ArrayList<Carta> aux = new ArrayList<Carta>();
-                    String[] indices = textoEntrada.split(",");
-                    for (String index : indices) {
-                        int idx = Integer.parseInt(index.trim()) - 1; // Convertir índice a base 0
-                        if (idx >= 0 && idx < this.controlador.getJugador(IDjugador).getMano().size()){
-                            Carta carta = this.controlador.getJugador(IDjugador).getMano().get(idx);
-                            if (!carta.perteneceAgrupo()) {
-                                aux.add(carta);
-                            } else {
-                                this.imprimirCartel("La carta " + carta + " ya pertenece a un grupo.");
-                            }
-                        } else {
-                            this.imprimirCartel("Índice inválido: " + (idx + 1));
-                        }
-                    }
-                    boolean resultado = this.controlador.chequearGrupo(aux);
-                    if (resultado) this.imprimirCartel("LAS CARTAS ENVIADAS FORMARON GRUPO, YA NO SE PUEDEN UTILIZAR PARA OTRO GRUPO");
-                    else this.imprimirCartel("LAS CARTAS NO FORMARON GRUPO CORRECTAMENTE");
+                    this.estado = Estados.VALIDAR_CIERRE;
+                    boolean resultado = this.controlador.chequearGrupo(this.controlador.getJugador(IDjugador).getMano());
+                    if (resultado) {this.imprimirCartel("LAS CARTAS ENVIADAS FORMARON GRUPO, YA NO SE PUEDEN UTILIZAR PARA OTRO GRUPO");}
+                    else {this.imprimirCartel("LAS CARTAS NO FORMARON GRUPO CORRECTAMENTE");}
                     break;
                 case VALIDAR_CIERRE:
-                    //NECESITO VALIDAR QUE LAS CARTAS QUE QUEDAN SIN GRUPO SEAN MINIMO 2 ( LA QUE VA A DESCARTAR
-                    // Y LA DE RESTO, VALIDAR QUE LA QUE VA A DESCARTAR ES < 5
-                    // SI NO PUEDO VALIDAR ESO, NO PUEDE CERRAR MANO, DESCARTA UNA
+                    this.imprimirCartel("ESTAS EN CIERRE <-------");
                     break;
             }
         }
@@ -228,12 +215,12 @@ public class VistaConsola extends JFrame implements IVista {
     }
 
     @Override
-    public void jugar() throws RemoteException {
+    public void jugar() throws Exception {
         this.imprimirCartel("-> EJECUTANDO JUGAR");
         int IDjugador = this.controlador.jugadorTurnoActual().getId();
         if (IDjugador == clienteID){
             inputField.setEnabled(true);
-            this.mostrarManoJugador();
+            textArea.setText(this.mostrarManoJugador());
             this.imprimirCartel("-----");
             this.imprimirCartel("DESCARTE -->" + this.controlador.getTopeDescarte() + "<--");
             this.imprimirCartel("-----");
@@ -291,14 +278,11 @@ public class VistaConsola extends JFrame implements IVista {
         this.estado = Estados.SALIR;
     }
 
-    @Override
-    public void mostrarManoJugador() throws RemoteException {
+    private String mostrarManoJugador() throws Exception {
         String s = "-------------------------Mano de " + this.controlador.jugadorTurnoActual().getNombre() + "----------------------------\n";
-        int i = 1;
-        for (Carta c: this.controlador.jugadorTurnoActual().getMano()){
-            this.imprimirCartel( "Indice: (" + i + ") " + c.toString());
-            i++;
-        }
+        for (int i = 0; i < this.controlador.tamanioManoJugador(this.clienteID); i++)
+            s = s + ((i + 1) + ". [" + this.controlador.jugadorTurnoActual().getCarta(i) + "]\n");
         s = s + "------------------------------------------------------------------------------------";
+        return s;
     }
 }

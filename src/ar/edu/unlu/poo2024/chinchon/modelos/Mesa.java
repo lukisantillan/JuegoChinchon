@@ -167,22 +167,48 @@ public class Mesa extends ObservableRemoto implements IMesa, Serializable {
     public ManejadorTurnos getManejadorTurnos() throws RemoteException {
         return this.manejadorTurnos;
     }
+
+    // NO ESTA EN UML
     // VALIDADOR DE GRUPOS
     private boolean esGrupoValido(ArrayList<Carta> cartas) throws RemoteException {
-        Map<Integer, Integer> conteoNumeros = new HashMap<>();
-        int comodines = 0;
+        Map<Integer, List<Carta>> cartasPorNumero = new HashMap<>();
+        List<Carta> comodines = new ArrayList<>();
 
+        // Separar cartas por número y almacenar comodines
         for (Carta carta : cartas) {
             if (carta.esComodin()) {
-                comodines++;
+                comodines.add(carta);
             } else if (carta instanceof CartaNormal) {
                 int numero = ((CartaNormal) carta).getNumero();
-                conteoNumeros.put(numero, conteoNumeros.getOrDefault(numero, 0) + 1);
+                cartasPorNumero.putIfAbsent(numero, new ArrayList<>());
+                cartasPorNumero.get(numero).add(carta);
             }
         }
 
-        for (int cantidad : conteoNumeros.values()) {
-            if (cantidad + comodines >= 3) {
+        // Buscar un grupo válido
+        for (Map.Entry<Integer, List<Carta>> entry : cartasPorNumero.entrySet()) {
+            List<Carta> cartasDelNumero = entry.getValue();
+            int totalCartas = cartasDelNumero.size() + comodines.size();
+
+            if (totalCartas >= 3) {
+                // Validar que las cartas del grupo no pertenezcan ya a otro grupo
+                for (Carta carta : cartasDelNumero) {
+                    if (carta.perteneceAgrupo()) {
+                        return false; // Si alguna carta del grupo ya pertenece a otro grupo, no es válido
+                    }
+                }
+
+                // Marcar las cartas como pertenecientes al grupo
+                for (Carta carta : cartasDelNumero) {
+                    carta.setPerteneceAgrupo(true); // Cambiar el atributo
+                }
+
+                // Marcar los comodines usados en el grupo
+                int comodinesUsados = 3 - cartasDelNumero.size();
+                for (int i = 0; i < comodinesUsados && i < comodines.size(); i++) {
+                    comodines.get(i).setPerteneceAgrupo(true); // Cambiar el atributo
+                }
+
                 return true;
             }
         }
@@ -191,10 +217,11 @@ public class Mesa extends ObservableRemoto implements IMesa, Serializable {
     }
 
     //VALIDADOR ESCALERA
-    private boolean esEscaleraValida(ArrayList<Carta> cartas) throws RemoteException{
+    private boolean esEscaleraValida(ArrayList<Carta> cartas) throws RemoteException {
         Map<Palos, ArrayList<Integer>> cartasPorPalo = new HashMap<>();
         int comodines = 0;
 
+        // Dividir las cartas por palo y contar comodines
         for (Carta carta : cartas) {
             if (carta.esComodin()) {
                 comodines++;
@@ -206,28 +233,69 @@ public class Mesa extends ObservableRemoto implements IMesa, Serializable {
             }
         }
 
+        // Validar posibles escaleras por palo
         for (Map.Entry<Palos, ArrayList<Integer>> entry : cartasPorPalo.entrySet()) {
             ArrayList<Integer> numeros = entry.getValue();
-            Collections.sort(numeros);
+            Collections.sort(numeros); // Ordenar las cartas por número
 
             int secuencia = 1;
+            int comodinesRestantes = comodines;
+
+            ArrayList<Carta> cartasEnEscalera = new ArrayList<>();
+            cartasEnEscalera.add(obtenerCartaPorNumero(cartas, numeros.get(0))); // Primera carta
+
             for (int i = 1; i < numeros.size(); i++) {
-                if (numeros.get(i) - numeros.get(i - 1) == 1) {
+                int diferencia = numeros.get(i) - numeros.get(i - 1);
+
+                if (diferencia == 1) {
+                    // Las cartas son consecutivas
                     secuencia++;
-                } else if (comodines > 0) {
-                    secuencia++;
-                    comodines--;
+                    cartasEnEscalera.add(obtenerCartaPorNumero(cartas, numeros.get(i)));
+                } else if (diferencia > 1 && comodinesRestantes >= diferencia - 1) {
+                    // Usar comodines para rellenar
+                    secuencia += diferencia;
+                    comodinesRestantes -= (diferencia - 1);
+                    cartasEnEscalera.add(obtenerCartaPorNumero(cartas, numeros.get(i)));
                 } else {
+                    // Reiniciar la secuencia
                     secuencia = 1;
+                    cartasEnEscalera.clear();
+                    cartasEnEscalera.add(obtenerCartaPorNumero(cartas, numeros.get(i)));
                 }
 
+                // Si la secuencia es válida, chequear si todas las cartas están libres
                 if (secuencia >= 3) {
-                    return true;
+                    // Validar que ninguna carta ya pertenezca a un grupo
+                    boolean todasLibres = cartasEnEscalera.stream().allMatch(c -> !c.perteneceAgrupo());
+                    if (todasLibres) {
+                        // Marcar las cartas como pertenecientes a un grupo
+                        cartasEnEscalera.forEach(c -> c.setPerteneceAgrupo(true));
+                        return true;
+                    }
+                }
+            }
+
+            // Usar comodines al final
+            if (comodinesRestantes > 0) {
+                secuencia += comodinesRestantes;
+                if (secuencia >= 3) {
+                    boolean todasLibres = cartasEnEscalera.stream().allMatch(c -> !c.perteneceAgrupo());
+                    if (todasLibres) {
+                        cartasEnEscalera.forEach(c -> c.setPerteneceAgrupo(true));
+                        return true;
+                    }
                 }
             }
         }
 
         return false;
+    }
+
+    private Carta obtenerCartaPorNumero(ArrayList<Carta> cartas, int numero) {
+        return cartas.stream()
+                .filter(c -> c instanceof CartaNormal && ((CartaNormal) c).getNumero() == numero)
+                .findFirst()
+                .orElse(null);
     }
 
     @Override

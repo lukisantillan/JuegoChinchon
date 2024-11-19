@@ -25,7 +25,4 @@ public interface IVista {
 
 
     public void salir();
-
-    void mostrarManoJugador() throws RemoteException;
-
 }
