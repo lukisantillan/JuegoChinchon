@@ -16,7 +16,7 @@ En el proyecto se utiliza patrones como MVC y Observer para una mejor organizaci
 
 ## Diagrama de clases
 
-![Image](https://app.diagrams.net/?src=about#G1m8z-ZZa6RYD9NobGlJ4iGrufjOHZrEiF#%7B%22pageId%22%3A%22c4acf3e9-155e-7222-9cf6-157b1a14988f%22%7D)
+![Image](src/ar/edu/unlu/poo2024/chinchon/UML.png)
 
 ## Instalación
 
