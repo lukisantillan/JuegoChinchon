@@ -8,9 +8,14 @@ public abstract class Carta implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final Palos palo;
+    private Boolean perteneceAgrupo = false;
 
     public Carta(Palos palo){
         this.palo = palo;
+    }
+
+    public boolean perteneceAgrupo() {
+        return perteneceAgrupo;
     }
 
     public boolean esComodin(){
@@ -31,5 +36,9 @@ public abstract class Carta implements Serializable {
 
     public Palos getPalo() {
         return palo;
+    }
+
+    public void setPerteneceAgrupo(Boolean perteneceAgrupo) {
+        this.perteneceAgrupo = perteneceAgrupo;
     }
 }

@@ -99,4 +99,8 @@ public class Jugador implements Serializable {
         this.fechaCreacion = fechaCreacion;
     }
 
+    public void setPuedeCerrarMano(Boolean condicion){
+        this.puedeCerrarMano = condicion;
+    }
+
 }

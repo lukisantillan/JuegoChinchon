@@ -11,6 +11,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.Objects;
 
 public class VistaConsola extends JFrame implements IVista {
@@ -101,14 +102,10 @@ public class VistaConsola extends JFrame implements IVista {
                 this.volverAlMenuPrincipal();
                 break;
             case JUEGO:
-                if (clienteID == 1) { // Solo el primer jugador puede iniciar
                     this.controlador.notificarComienzo(clienteID);
                     String nombreJugador = this.getControlador().getJugador(this.clienteID).getNombre();
                     setTitle("CHINCHON -> JUGANDO ");
                     this.jugar();
-                } else {
-                    textArea.append("... <-\n");
-                }
                 break;
             case ESPERANDO_JUGADA:
             case ROBAR_CARTA:
@@ -167,46 +164,57 @@ public class VistaConsola extends JFrame implements IVista {
                     }
                     this.estado = Estados.ROBAR_CARTA;
                     this.mostrarManoJugador();
-                    this.imprimirCartel("SELECCIONE LA CARTA A DESCARTAR");
+                    this.imprimirCartel("DESEA FORMAR GRUPOS PARA CERRAR LA MANO(recuerde que debe tener al menos 2 grupos de 3 cartas): ");
+                    this.imprimirCartel("[1] - SI");
+                    this.imprimirCartel("[2] - NO");
                     break;
                 case ROBAR_CARTA:
                     int numero = Integer.parseInt(textoEntrada);
-                    this.imprimirCartel("DESCARTANDO LA CARTA " + numero + " QUE ES-> " + this.controlador.getJugador(IDjugador).getCarta(numero -1));
-                    this.controlador.descartarCarta(IDjugador,numero - 1);
-                    if (this.controlador.puedeCortar(IDjugador)){
-                        this.imprimirCartel("DESEA CORTAR LA MANO: ");
-                        this.imprimirCartel("[1] - SI");
-                        this.imprimirCartel("[2] - NO");
-                        this.estado = Estados.CORTAR;
-                    } else if (!this.controlador.puedeCortar(IDjugador)){
-                        this.imprimirCartel("DESEA PASAR LA RONDA - >");
+                    if (numero == 2){
+                        this.imprimirCartel("INGRESE EL INDICE DE LA CARTA QUE QUIERE DESCARTAR: ");
                         this.estado = Estados.TIRAR_CARTA;
+                        break;
+                    } else if (numero == 1){
+                        this.estado = Estados.CORTAR;
+                        this.imprimirCartel("Selecciona las cartas para formar un grupo (ingresa los números separados por comas):");
+                        break;
+                    } else {
+                        this.imprimirCartel("INGRESE UN VALOR VALIDO");
+                        break;
                     }
-                    break;
                 case TIRAR_CARTA:
+                    numero = Integer.parseInt(textoEntrada);;
+                    this.controlador.descartarCarta(IDjugador,numero - 1);
                     this.imprimirCartel("PASANDO RONDA.. ");
                     this.controlador.pasarTurno();
                     this.estado = Estados.JUEGO;
                     this.procesarEntrada(textoEntrada);
                     break;
                 case CORTAR:
-                    numero = Integer.parseInt(textoEntrada);
-                    if (numero == 2){
-                        this.estado = Estados.TIRAR_CARTA;
-                        break;
+                    this.mostrarManoJugador();
+                    ArrayList<Carta> aux = new ArrayList<Carta>();
+                    String[] indices = textoEntrada.split(",");
+                    for (String index : indices) {
+                        int idx = Integer.parseInt(index.trim()) - 1; // Convertir índice a base 0
+                        if (idx >= 0 && idx < this.controlador.getJugador(IDjugador).getMano().size()){
+                            Carta carta = this.controlador.getJugador(IDjugador).getMano().get(idx);
+                            if (!carta.perteneceAgrupo()) {
+                                aux.add(carta);
+                            } else {
+                                this.imprimirCartel("La carta " + carta + " ya pertenece a un grupo.");
+                            }
+                        } else {
+                            this.imprimirCartel("Índice inválido: " + (idx + 1));
+                        }
                     }
-                    this.controlador.sumarPuntos(IDjugador);
-                    this.imprimirCartel("EL JUGADOR TIENE LOS SIGUIENTES PUNTOS : " + this.controlador.getJugador(IDjugador).getPuntaje());
-                    if (this.controlador.getJugador(IDjugador).getPuntaje() >= 50){
-                        //Jugador eliminado.
-                    } else if (this.jugadorConMenosPuntaje == null){
-                        this.jugadorConMenosPuntaje = this.controlador.getJugador(IDjugador);
-                    } else if(this.jugadorConMenosPuntaje.getPuntaje() >= this.controlador.getJugador(IDjugador).getPuntaje()){
-                        this.jugadorConMenosPuntaje = this.controlador.getJugador(IDjugador);
-                    }
-                    this.imprimirCartel("EL JUGADOR CON MENOS PUNTAJE ES : " + this.jugadorConMenosPuntaje.getNombre());
-                    this.imprimirCartel("DESEA PASAR LA RONDA - >");
-                    this.estado = Estados.TIRAR_CARTA;
+                    boolean resultado = this.controlador.chequearGrupo(aux);
+                    if (resultado) this.imprimirCartel("LAS CARTAS ENVIADAS FORMARON GRUPO, YA NO SE PUEDEN UTILIZAR PARA OTRO GRUPO");
+                    else this.imprimirCartel("LAS CARTAS NO FORMARON GRUPO CORRECTAMENTE");
+                    break;
+                case VALIDAR_CIERRE:
+                    //NECESITO VALIDAR QUE LAS CARTAS QUE QUEDAN SIN GRUPO SEAN MINIMO 2 ( LA QUE VA A DESCARTAR
+                    // Y LA DE RESTO, VALIDAR QUE LA QUE VA A DESCARTAR ES < 5
+                    // SI NO PUEDO VALIDAR ESO, NO PUEDE CERRAR MANO, DESCARTA UNA
                     break;
             }
         }

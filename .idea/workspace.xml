@@ -6,6 +6,13 @@
   <component name="ChangeListManager">
     <list default="true" id="e54195e2-1ac5-4aac-8b48-6814a3483bcb" name="Changes" comment="a">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ar/edu/unlu/poo2024/chinchon/controladores/Controlador.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ar/edu/unlu/poo2024/chinchon/controladores/Controlador.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ar/edu/unlu/poo2024/chinchon/modelos/IMesa.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ar/edu/unlu/poo2024/chinchon/modelos/IMesa.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ar/edu/unlu/poo2024/chinchon/modelos/Jugador.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ar/edu/unlu/poo2024/chinchon/modelos/Jugador.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ar/edu/unlu/poo2024/chinchon/modelos/Mesa.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ar/edu/unlu/poo2024/chinchon/modelos/Mesa.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ar/edu/unlu/poo2024/chinchon/modelos/carta/Carta.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ar/edu/unlu/poo2024/chinchon/modelos/carta/Carta.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ar/edu/unlu/poo2024/chinchon/vistas/Estados.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ar/edu/unlu/poo2024/chinchon/vistas/Estados.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ar/edu/unlu/poo2024/chinchon/vistas/VistaConsola.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ar/edu/unlu/poo2024/chinchon/vistas/VistaConsola.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

@@ -6,11 +6,9 @@ import ar.edu.unlu.rmimvc.observer.IObservadorRemoto;
 import ar.edu.unlu.rmimvc.observer.ObservableRemoto;
 
 import java.io.Serializable;
+import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.Formattable;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Mesa extends ObservableRemoto implements IMesa, Serializable {
@@ -118,6 +116,7 @@ public class Mesa extends ObservableRemoto implements IMesa, Serializable {
     }
 
     @Override
+    //FALTA VALIDAR CUANDO PUEDE CORTAR
     public boolean puedeCortar(int idJugador) throws RemoteException{
         return true;
     }
@@ -127,21 +126,6 @@ public class Mesa extends ObservableRemoto implements IMesa, Serializable {
         int puntos = 0;
         Jugador j = jugadores.get(idJugador);
         ArrayList<Carta> manoJugador = j.getMano();
-        ArrayList<ArrayList<Carta>> combi = encontrarGrupos(manoJugador,3);
-        if (!combi.isEmpty()) {
-            for (ArrayList<Carta> a : combi) {
-                manoJugador.removeAll(a);
-            }
-        }
-        if (!manoJugador.isEmpty()){
-            for (Carta c: manoJugador){
-                if (c.esComodin()){
-                    puntos += 10;
-                } else {
-                    puntos += c.getNumero();
-                }
-            }
-        }
         j.sumarPuntos(puntos);
         return puntos;
     }
@@ -183,26 +167,84 @@ public class Mesa extends ObservableRemoto implements IMesa, Serializable {
     public ManejadorTurnos getManejadorTurnos() throws RemoteException {
         return this.manejadorTurnos;
     }
+    // VALIDADOR DE GRUPOS
+    private boolean esGrupoValido(ArrayList<Carta> cartas) throws RemoteException {
+        Map<Integer, Integer> conteoNumeros = new HashMap<>();
+        int comodines = 0;
 
-    @Override
-    public ArrayList<ArrayList<Carta>> encontrarGrupos(ArrayList<Carta> mano, int cantidad) {
-        HashMap<Integer, ArrayList<Carta>> cartasPorNumero = new HashMap<>();
-
-        // Agrupamos las cartas por su número
-        for (Carta carta : mano) {
-            int numero = carta.getNumero();
-            cartasPorNumero.putIfAbsent(numero, new ArrayList<>());
-            cartasPorNumero.get(numero).add(carta);
-        }
-
-        // Filtramos los grupos que cumplen con la cantidad mínima requerida
-        ArrayList<ArrayList<Carta>> grupos = new ArrayList<>();
-        for (ArrayList<Carta> grupo : cartasPorNumero.values()) {
-            if (grupo.size() >= cantidad) {
-                grupos.add(grupo);
+        for (Carta carta : cartas) {
+            if (carta.esComodin()) {
+                comodines++;
+            } else if (carta instanceof CartaNormal) {
+                int numero = ((CartaNormal) carta).getNumero();
+                conteoNumeros.put(numero, conteoNumeros.getOrDefault(numero, 0) + 1);
             }
         }
 
-        return grupos;
+        for (int cantidad : conteoNumeros.values()) {
+            if (cantidad + comodines >= 3) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    //VALIDADOR ESCALERA
+    private boolean esEscaleraValida(ArrayList<Carta> cartas) throws RemoteException{
+        Map<Palos, ArrayList<Integer>> cartasPorPalo = new HashMap<>();
+        int comodines = 0;
+
+        for (Carta carta : cartas) {
+            if (carta.esComodin()) {
+                comodines++;
+            } else if (carta instanceof CartaNormal) {
+                Palos palo = carta.getPalo();
+                int numero = ((CartaNormal) carta).getNumero();
+                cartasPorPalo.putIfAbsent(palo, new ArrayList<>());
+                cartasPorPalo.get(palo).add(numero);
+            }
+        }
+
+        for (Map.Entry<Palos, ArrayList<Integer>> entry : cartasPorPalo.entrySet()) {
+            ArrayList<Integer> numeros = entry.getValue();
+            Collections.sort(numeros);
+
+            int secuencia = 1;
+            for (int i = 1; i < numeros.size(); i++) {
+                if (numeros.get(i) - numeros.get(i - 1) == 1) {
+                    secuencia++;
+                } else if (comodines > 0) {
+                    secuencia++;
+                    comodines--;
+                } else {
+                    secuencia = 1;
+                }
+
+                if (secuencia >= 3) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    //SETEO DE LAS CARTAS COMO PERTENECIENTES A GRUPO
+    public boolean formarGrupo(ArrayList<Carta> cartas) throws RemoteException {
+        boolean retorno = false;
+        if (esGrupoValido(cartas)) {
+            for (Carta carta : cartas) {
+                carta.setPerteneceAgrupo(true);
+            }
+            retorno = true;
+        } else if (esEscaleraValida(cartas)) {
+            for (Carta carta : cartas) {
+                carta.setPerteneceAgrupo(true);
+            }
+            retorno = true;
+        }
+        return retorno;
     }
 }

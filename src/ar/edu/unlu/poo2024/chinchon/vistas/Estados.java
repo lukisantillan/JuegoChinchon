@@ -11,5 +11,6 @@ public enum Estados {
     ROBAR_CARTA,
     TIRAR_CARTA,
     CORTAR,
-    VALIDAR_CIERRE, FIN;
+    VALIDAR_CIERRE,
+    FIN;
 }

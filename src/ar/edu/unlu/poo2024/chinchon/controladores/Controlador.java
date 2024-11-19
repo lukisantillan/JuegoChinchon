@@ -40,16 +40,14 @@ public class Controlador implements IControladorRemoto {
             return false;
         }
     }
-
-    public ArrayList<ArrayList<Carta>> encontrarGrupos(ArrayList<Carta> mano, int cantidad) throws RemoteException {
+    public boolean chequearGrupo(ArrayList<Carta> cartas){
         try {
-            return this.modelo.encontrarGrupos(mano, cantidad);
+            return this.modelo.formarGrupo(cartas);
         } catch (Exception e) {
             e.printStackTrace();
+            return false;
         }
-        return null;
     }
-
     public int agregarJugador(String nombre) throws RemoteException {
         try {
             return this.modelo.agregarJugador(nombre);
@@ -196,6 +194,9 @@ public class Controlador implements IControladorRemoto {
                     break;
                 case CAMBIO_TURNO:
                     this.vista.jugar();
+                    break;
+                case RONDA_TERMINADA:
+                    //funcion para mostrar puntaje de jugadores
                     break;
                 case SALIR:
                     this.vista.salir();

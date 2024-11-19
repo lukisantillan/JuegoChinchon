@@ -43,5 +43,6 @@ public interface IMesa extends IObservableRemoto {
 
     boolean puedeCortar(int idJugador) throws RemoteException;
 
-    ArrayList<ArrayList<Carta>> encontrarGrupos(ArrayList<Carta> mano, int cantidad) throws RemoteException;
+    //falta en controlador y UML
+    boolean formarGrupo(ArrayList<Carta> cartas) throws RemoteException;
 }
